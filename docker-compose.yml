@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongo:
+    image: mongo:6.0
+    container_name: mern-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: mernapp
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mern-network
+
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: mern-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongo:27017/mernapp
+      - PORT=5001
+    depends_on:
+      - mongo
+    networks:
+      - mern-network
+
+  # Frontend React App
+  frontend:
+    build: ./frontend
+    container_name: mern-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:5001/api
+    depends_on:
+      - backend
+    networks:
+      - mern-network
+
+volumes:
+  mongo_data:
+
+networks:
+  mern-network:
+    driver: bridge
